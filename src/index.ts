@@ -26,10 +26,15 @@ function middlewareLogResponses(req: Request, res: Response, next: () => void) {
 
 function showHits(req: Request, res: Response, next: () => void) {
   // insert the number of hits to the file server in the response
-  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Content-Type", "text/html");
   res.setHeader("charset", "utf-8");
   res.status(200);
-  res.send(`Hits: ${api_config.fileserverHits}`);
+  res.send(`<html>
+  <body>
+    <h1>Welcome, Chirpy Admin</h1>
+    <p>Chirpy has been visited ${api_config.fileserverHits} times!</p> 
+  </body>
+</html>`);
 
   next();
 }
@@ -50,10 +55,10 @@ function middlewareMetricsInc(req: Request, res: Response, next: () => void) {
   next();
 }
 
-app.get("/healthz", handlerReadiness);
+app.get("/api/healthz", handlerReadiness);
 
-app.get("/metrics", showHits);
-app.get("/reset", resetHits);
+app.get("/admin/metrics", showHits);
+app.get("/admin/reset", resetHits);
 
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
   app.listen(HTTP_PORT, () => {
