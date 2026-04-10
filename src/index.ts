@@ -58,7 +58,7 @@ function middlewareMetricsInc(req: Request, res: Response, next: () => void) {
 app.get("/api/healthz", handlerReadiness);
 
 app.get("/admin/metrics", showHits);
-app.get("/admin/reset", resetHits);
+app.post("/admin/reset", resetHits);
 
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
   app.listen(HTTP_PORT, () => {
