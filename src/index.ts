@@ -7,6 +7,8 @@ import './config.js';
 const app = express();
 const HTTP_PORT = 8080;
 
+app.use(express.json());
+
 // -------- Health
 function handlerReadiness(req: Request, res: Response) {
   res.setHeader("Content-Type", "text/plain");
@@ -60,30 +62,43 @@ function middlewareMetricsInc(req: Request, res: Response, next: () => void) {
 
 // -------- Validate Chirp
 function validateChirp(req: Request, res: Response, next: () => void) {
-  type responseData = {
-    valid: boolean;
-  };
+  try {
+    const chirp = req.body?.body;
 
-    req.on("end", () => {
-    try {
-      if (req.body.length > 140) {
-
-        res.header("Content-Type", "application/json");
-        res.status(400).send(JSON.stringify({ error: "Chirp is too long" }));
-      }
-
-      else {
-        const respBody: responseData = { valid: true };
-        res.status(200);
-        res.header("Content-Type", "application/json");
-        res.send(JSON.stringify(respBody));
-      }
-    } catch (err) {
-      res.header("Content-Type", "application/json");
-      res.status(400).send(JSON.stringify({ error: "Something went wrong" }));
+    if (typeof chirp !== "string") {
+      return res.status(400).json({ error: "Something went wrong" });
     }
-  });
-}
+
+    if (chirp.length <= 140) {
+      // "Profane" word check
+      let cleaned = chirp;
+      const profaneWords = ["kerfuffle", "sharbert", "fornax"];
+      const containsProfane = profaneWords.some(word => chirp.toLowerCase().includes(word));
+      if (containsProfane) {
+        for (const badword of profaneWords) {
+          cleaned = cleaned.replaceAll(new RegExp(badword, "gi"), "****") ;
+        }
+      }
+
+
+      // Valid (Cleaned) Response
+      res.status(200);
+      res.header("Content-Type", "application/json");
+      res.send(JSON.stringify({cleanedBody: cleaned}));
+    }
+
+    // Length Exceeded 140
+    else {
+      res.header("Content-Type", "application/json");
+      res.status(400).send(JSON.stringify({ error: "Chirp is too long" }));
+    }
+
+  } catch (err) {
+    res.header("Content-Type", "application/json");
+    res.status(400).send(JSON.stringify({ error: "Something went wrong" }));
+  }
+};
+
 
 
 // -------- Routes
@@ -93,7 +108,6 @@ app.get("/admin/metrics", showHits);
 app.post("/admin/reset", resetHits);
 app.post("/api/validate_chirp", validateChirp);
 
-app.use(express.json());
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
 
 app.listen(HTTP_PORT, () => {

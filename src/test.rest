@@ -5,5 +5,5 @@ Content-Type: application/json
 Header: application/json
 
 {
-  "body": "This is a test chirpasdfsa dfasdf asdf asdf sadf sadf asdf asd fsda fds  asdfasdf asdvcavsdasdv asdv asd vasdf vadsf asdfewf eqvc vv qwv qw vqvw "
+  "body": "This is a test chirpasdfsa dfasdf asdf kerfuffle"
 }
