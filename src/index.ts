@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction } from "express";
 import { Request, Response } from "express";
 import { ok } from "node:assert";
 import { api_config } from "./config.js";
@@ -61,7 +61,7 @@ function middlewareMetricsInc(req: Request, res: Response, next: () => void) {
 }
 
 // -------- Validate Chirp
-function validateChirp(req: Request, res: Response, next: () => void) {
+async function validateChirp(req: Request, res: Response, next: NextFunction) {
   try {
     const chirp = req.body?.body;
 
@@ -80,7 +80,6 @@ function validateChirp(req: Request, res: Response, next: () => void) {
         }
       }
 
-
       // Valid (Cleaned) Response
       res.status(200);
       res.header("Content-Type", "application/json");
@@ -89,17 +88,24 @@ function validateChirp(req: Request, res: Response, next: () => void) {
 
     // Length Exceeded 140
     else {
-      res.header("Content-Type", "application/json");
-      res.status(400).send(JSON.stringify({ error: "Chirp is too long" }));
+      throw new Error("Chirp is too long");
     }
 
   } catch (err) {
-    res.header("Content-Type", "application/json");
-    res.status(400).send(JSON.stringify({ error: "Something went wrong" }));
+    next(err);
   }
 };
 
-
+// Handle Errors
+function handleErrors(err: Error, req: Request, res: Response, next: NextFunction) {
+  console.log("Something went wrong on our end");
+  res.status(500).json(
+    {
+      error: "Something went wrong on our end",
+    }
+  );
+  next();
+};
 
 // -------- Routes
 app.get("/api/healthz", handlerReadiness);
@@ -109,7 +115,7 @@ app.post("/admin/reset", resetHits);
 app.post("/api/validate_chirp", validateChirp);
 
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
-
+app.use(handleErrors);
 app.listen(HTTP_PORT, () => {
   console.log(`Server is running at http://localhost:${HTTP_PORT}`);
   app.use(middlewareLogResponses);
