@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ChirpTooLongError } from "../middleware/errorHandler.js";
 
 // Readiness
 export function handlerReadiness(req: Request, res: Response) {
@@ -38,7 +39,7 @@ export async function validateChirp(req: Request, res: Response, next: NextFunct
 
     // Length Exceeded 140
     else {
-      throw new Error("Chirp is too long");
+      throw new ChirpTooLongError("Chirp is too long");
     }
 
   } catch (err) {
