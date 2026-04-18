@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import postgres from "postgres";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { closeDb } from "./db/index.js";
 
 import apiRoutes from "./routes/api.js";
 import adminRoutes from "./routes/admin.js";
@@ -27,7 +28,19 @@ app.use("/admin", adminRoutes);
 
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
 app.use(handleErrors);
-app.listen(HTTP_PORT, () => {
+const server = app.listen(HTTP_PORT, () => {
   console.log(`Server is running at http://localhost:${HTTP_PORT}`);
   app.use(middlewareLogResponses);
 });
+
+function gracefulShutdown() {
+  console.log("\nShutting down...");
+  server.close(async () => {
+    await closeDb();
+    console.log("Database connection closed.");
+    process.exit(0);
+  });
+}
+
+process.on("SIGINT", gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);

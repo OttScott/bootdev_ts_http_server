@@ -25,9 +25,12 @@
     "build": "npx tsc",
     "start": "node dist/index.js",
     "dev": "npx tsc && node dist/index.js",
-    
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate"
+
+    "db:start": "wsl sudo service postgresql start",
+    "db:stop": "wsl sudo service postgresql stop",
+
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

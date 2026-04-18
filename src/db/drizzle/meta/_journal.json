@@ -8,6 +8,13 @@
       "when": 1776205645116,
       "tag": "0000_chief_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776539208156,
+      "tag": "0001_fat_rick_jones",
+      "breakpoints": true
     }
   ]
 }
