@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ChirpTooLongError } from "../middleware/errorHandler.js";
+import { users } from "../db/schema.js";
+import { createUser } from "../db/queries/users.js";
 
 // Readiness
 export function handlerReadiness(req: Request, res: Response) {
@@ -45,4 +47,19 @@ export async function validateChirp(req: Request, res: Response, next: NextFunct
   } catch (err) {
     next(err);
   }
-};
+}; // export async function validateChirp(req: Request, res: Response, next: NextFunction) {
+
+export async function newUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email } = req.body;
+
+    console.log("Creating new user with email:", email);
+
+    const user = await createUser({ email });
+    res.status(201);
+    res.header("Content-Type", "application/json");
+    res.send(JSON.stringify(user));
+  } catch (err) {
+    next(err);
+  }
+}
