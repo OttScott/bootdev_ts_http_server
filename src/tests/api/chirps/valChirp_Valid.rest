@@ -3,6 +3,6 @@ Content-Type: application/json
 Header: application/json
 
 {
-  "userId": "874f0b32-c10a-4004-a921-16208bf2b9d2",
+  "userId": "675c4831-a040-4571-860f-5c2830a4178f",
   "body": "This is a test"
 }

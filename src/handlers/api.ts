@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ChirpTooLongError } from "../middleware/errorHandler.js";
 import { users } from "../db/schema.js";
 import { createUser } from "../db/queries/users.js";
-import { createChirp } from "../db/queries/chirps.js";
+import { createChirp, getChirpsfromDB, getSingleChirpfromDB } from "../db/queries/chirps.js";
 
 // Readiness
 export function handlerReadiness(req: Request, res: Response) {
@@ -77,6 +77,38 @@ export async function postChirp(req: Request, res: Response, next: NextFunction)
     res.header("Content-Type", "application/json");
     res.send(JSON.stringify(chirp));
 
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getChirps(req: Request, res: Response, next: NextFunction) {
+  try {
+    const chirps = await getChirpsfromDB();
+    res.status(200);
+    res.header("Content-Type", "application/json");
+    res.send(JSON.stringify(chirps));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getSingleChirp(
+    req: Request<{ chirpId: string }>,
+    res: Response,
+    next: NextFunction
+  ) {
+  try {
+    const chirpId = req.params.chirpId;
+    if (!chirpId || typeof chirpId !== "string") {
+      res.status(400).json({ error: "Missing chirp id" });
+      next(new Error("Missing chirp id"));
+      return;
+    }
+    const chirp = await getSingleChirpfromDB(chirpId);
+    res.status(200);
+    res.header("Content-Type", "application/json");
+    res.send(JSON.stringify(chirp[0]));
   } catch (err) {
     next(err);
   }
