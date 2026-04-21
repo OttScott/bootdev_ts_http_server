@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { ChirpTooLongError } from "../middleware/errorHandler.js";
 import { users } from "../db/schema.js";
-import { createUser } from "../db/queries/users.js";
+import { hashPassword, chechPasswordHash } from "../auth.js";
+import { createUser, findUserByEmail } from "../db/queries/users.js";
 import { createChirp, getChirpsfromDB, getSingleChirpfromDB } from "../db/queries/chirps.js";
 
 // Readiness
@@ -50,14 +51,49 @@ async function validateChirp(req: Request, res: Response): Promise<[string, Erro
 
 export async function newUser(req: Request, res: Response, next: NextFunction) {
   try {
-    const { email } = req.body;
+    const email = req.body.email;
+    const password = req.body.password;
 
     console.log("Creating new user with email:", email);
 
-    const user = await createUser({ email });
+    const hashed_password = await hashPassword(password);
+    const user = await createUser({ email, hashed_password });
+    if (!user) {
+      res.status(409).json({ error: "User already exists" });
+      return;
+    }
+    const { hashed_password: _omit, ...safeUser } = user;
     res.status(201);
     res.header("Content-Type", "application/json");
-    res.send(JSON.stringify(user));
+    res.send(JSON.stringify(safeUser));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function loginUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    console.log("Logging in user with email:", email);
+
+    const user = await findUserByEmail(email);
+    if (!user) {
+      res.status(401).json({ error: "incorrect email or password" });
+      return;
+    }
+
+    const isPasswordValid = await chechPasswordHash(password, user.hashed_password);
+    if (!isPasswordValid) {
+      res.status(401).json({ error: "incorrect email or password" });
+      return;
+    }
+
+    const { hashed_password: _omit, ...safeUser } = user;
+    res.status(200);
+    res.header("Content-Type", "application/json");
+    res.send(JSON.stringify(safeUser));
   } catch (err) {
     next(err);
   }

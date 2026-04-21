@@ -3,5 +3,6 @@ Content-Type: application/json
 Header: application/json
 
 {
-  "email": "test@example.com"
+  "email": "test@example.com",
+  "password": "password123"
 }
