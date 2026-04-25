@@ -1,8 +1,7 @@
 POST http://localhost:8080/api/chirps HTTP/1.1
 Content-Type: application/json
-Header: application/json
+Authorization: Bearer <JWT>
 
 {
-  "userId": "675c4831-a040-4571-860f-5c2830a4178f",
   "body": "This is a test"
 }

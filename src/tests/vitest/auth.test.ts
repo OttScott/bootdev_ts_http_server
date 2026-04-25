@@ -38,9 +38,29 @@ describe("JWT Handling", () => {
     }, 2000);
   });
 
+    it("should throw an exception for malformed token", () => {
+      const malformedToken = "this.is.not.a.valid.token";
+      expect(() => validateJWT(malformedToken, secret)).toThrow("Invalid token");
+    });
+
     it("should return userId for valid token", () => {
     const token = makeJWT("user123", 60, secret);
     const userId = validateJWT(token, secret);
     expect(userId).toBe("user123");
   });
+
+    it("should throw an exception for empty token", () => {
+      const emptyToken = "";
+      expect(() => validateJWT(emptyToken, secret)).toThrow("Invalid token");
+  });
+
+    it("should throw an exception for null token", () => {
+      const nullToken = null as unknown as string;
+      expect(() => validateJWT(nullToken, secret)).toThrow("Invalid token");
+  });
+
+    it("should throw an exception for invalid expiresInSeconds value", () => {
+      expect(() => makeJWT("user123", -5, secret)).toThrow("Invalid expiresInSeconds value");
+  });
+
 });

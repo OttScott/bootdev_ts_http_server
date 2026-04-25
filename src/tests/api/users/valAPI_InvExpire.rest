@@ -3,6 +3,7 @@ Content-Type: application/json
 Header: application/json
 
 {
-  "email": "bad_email@example.com",
-  "password": "bad_password"
+  "email": "test@example.com",
+  "password": "password123",
+  "expiresInSeconds": -2
 }

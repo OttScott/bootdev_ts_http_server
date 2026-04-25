@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ChirpTooLongError } from "../middleware/errorHandler.js";
 import { users } from "../db/schema.js";
-import { hashPassword, chechPasswordHash } from "../auth.js";
+import { hashPassword, checkPasswordHash, makeJWT, validateJWT, getBearerToken } from "../auth.js";
 import { createUser, findUserByEmail } from "../db/queries/users.js";
 import { createChirp, getChirpsfromDB, getSingleChirpfromDB } from "../db/queries/chirps.js";
+import { config } from "../config.js";
 
 // Readiness
 export function handlerReadiness(req: Request, res: Response) {
@@ -84,16 +85,30 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    const isPasswordValid = await chechPasswordHash(password, user.hashed_password);
+    const isPasswordValid = await checkPasswordHash(password, user.hashed_password);
     if (!isPasswordValid) {
       res.status(401).json({ error: "incorrect email or password" });
       return;
     }
 
+    let expiresInSeconds = 3600;
+    if (req.body?.expiresInSeconds) {
+      expiresInSeconds = Number(req.body.expiresInSeconds);
+      if (isNaN(expiresInSeconds) || expiresInSeconds <= 0) {
+        res.status(400).json({ error: "Invalid expiresInSeconds value" });
+        return;
+      }
+      if (expiresInSeconds > 3600) {
+        expiresInSeconds = 3600;
+      }
+    }
+    
+    const JWTtoken = makeJWT(user.id, expiresInSeconds, config.API.SECRET);
+    
     const { hashed_password: _omit, ...safeUser } = user;
     res.status(200);
     res.header("Content-Type", "application/json");
-    res.send(JSON.stringify(safeUser));
+    res.send(JSON.stringify({ ...safeUser, token: JWTtoken }));
   } catch (err) {
     next(err);
   }
@@ -101,13 +116,29 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
 
 export async function postChirp(req: Request, res: Response, next: NextFunction) {
   try {
+    let userId = "";
+    // Validate JWT from Authorization header before allowing chirp creation
+    if (req.headers?.authorization) {
+      const token = getBearerToken(req);
+      try {
+        userId = validateJWT(token, config.API.SECRET);
+      } catch (err) {
+        res.status(401).json({ error: (err as Error).message });
+        return;
+      }
+    } else {
+      res.status(401).json({ error: "Missing Authorization header" });
+      return;
+    }
+
     const [cleaned, err] = await validateChirp(req, res);
     if (err) {
       next(err);
       return;
     }
-    const userId = req.body?.userId;
+
     const newChirp = { userId: userId, body : cleaned  };
+console.log("Creating new chirp:", newChirp);
     const chirp = await createChirp( newChirp );
     res.status(201);
     res.header("Content-Type", "application/json");

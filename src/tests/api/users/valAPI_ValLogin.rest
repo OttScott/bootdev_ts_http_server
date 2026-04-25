@@ -4,5 +4,6 @@ Header: application/json
 
 {
   "email": "test@example.com",
-  "password": "password123"
+  "password": "password123",
+  "expiresInSeconds": 3600
 }
